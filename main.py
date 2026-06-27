@@ -1,4 +1,4 @@
-﻿"""
+"""
 main.py — 选中翻译工具主入口
 
 Windows 桌面翻译工具：选中任意文本，按下 Ctrl+Alt+Q 即可弹窗显示翻译结果。
@@ -96,7 +96,20 @@ class TranslateApp:
         self._main_thread_id = threading.get_ident()
         self._is_quitting = False
         self.root.withdraw()  # 隐藏主窗口
-        self.root.title("选中翻译")
+        self.root.title("Dịch Khi Bôi Đen")
+
+        # ── 设置窗口图标 ──
+        ico_path = None
+        if getattr(sys, 'frozen', False):
+            ico_path = os.path.join(sys._MEIPASS, "app.ico")
+        else:
+            ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.ico")
+        
+        if os.path.exists(ico_path):
+            try:
+                self.root.iconbitmap(ico_path)
+            except Exception as e:
+                logger.warning(f"无法设置 Tkinter 窗口图标 (iconbitmap): {e}")
         
         # 设置字体渲染质量
         try:
@@ -135,7 +148,7 @@ class TranslateApp:
         logger.info("等待用户操作...")
         
         # 弹窗提示启动成功
-        messagebox.showinfo("选中翻译工具", f"翻译工具已在后台启动！\n\n快捷键：{self.current_hotkey_display}\n请尝试选中文本后按下快捷键。")
+        messagebox.showinfo("Dịch Khi Bôi Đen", f"Công cụ dịch đã chạy nền!\n\nPhím tắt: {self.current_hotkey_display}\nHãy bôi đen văn bản rồi nhấn phím tắt để dịch.")
 
         # ── 启动主循环 ──
         try:
@@ -180,10 +193,10 @@ class TranslateApp:
         """翻译引擎初始化完成回调"""
         if success:
             logger.info("翻译引擎初始化成功，工具已就绪")
-            self.tray.set_status("就绪")
+            self.tray.set_status("Sẵn sàng")
         else:
             logger.error("翻译引擎初始化失败")
-            self.tray.set_status("初始化失败")
+            self.tray.set_status("Khởi tạo thất bại")
 
     def _on_translator_status(self, message: str):
         """翻译引擎状态更新回调"""
@@ -297,7 +310,7 @@ def check_single_instance():
             from tkinter import messagebox
             root = tk.Tk()
             root.withdraw()
-            messagebox.showwarning("选中翻译工具", "程序已在运行中！\n请检查系统托盘区域。")
+            messagebox.showwarning("PopTrans", "Ứng dụng đang chạy rồi!\nVui lòng kiểm tra khay hệ thống.")
             root.destroy()
         except:
             pass
@@ -327,7 +340,7 @@ if __name__ == "__main__":
             from tkinter import messagebox
             root = tk.Tk()
             root.withdraw()
-            messagebox.showerror("选中翻译 - 错误", f"程序启动失败：\n\n{e}\n\n详见 translate.log")
+            messagebox.showerror("PopTrans - Lỗi", f"Khởi động ứng dụng thất bại:\n\n{e}\n\nXem chi tiết trong translate.log")
             root.destroy()
         except:
             pass

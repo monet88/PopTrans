@@ -14,8 +14,8 @@ from typing import Dict, Any
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG: Dict[str, Any] = {
-    "hotkey": "<ctrl>+<alt>+q",
-    "hotkey_display": "Ctrl+Alt+Q",
+    "hotkey": "<ctrl>+q",
+    "hotkey_display": "Ctrl+Q",
 }
 
 

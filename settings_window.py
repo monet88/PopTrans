@@ -93,7 +93,7 @@ class SettingsWindow:
 
         win = tk.Toplevel(self.root)
         self.window = win
-        win.title("快捷键设置")
+        win.title("Hotkey Settings")
         win.overrideredirect(True)
         win.resizable(False, False)
         win.attributes("-topmost", True)
@@ -119,7 +119,7 @@ class SettingsWindow:
         accent_bar.pack(side="left", fill="y")
 
         title_label = tk.Label(
-            header, text="快捷键设置",
+            header, text="Hotkey Settings",
             font=(FONT_FAMILY, 15, "bold"),
             fg=COLORS["text_result"], bg=COLORS["header_bg"],
         )
@@ -144,7 +144,7 @@ class SettingsWindow:
 
         # 当前快捷键
         tk.Label(
-            content, text=f"当前快捷键：{current_display}",
+            content, text=f"Current hotkey: {current_display}",
             font=(FONT_FAMILY, 14),
             fg=COLORS["text_muted"], bg=COLORS["bg"],
         ).pack(pady=(18, 4), padx=20, anchor="w")
@@ -158,7 +158,7 @@ class SettingsWindow:
 
         self._display_label = tk.Label(
             capture_frame,
-            text="按下新的快捷键...",
+            text="Press a new hotkey...",
             font=(FONT_FAMILY, 20, "bold"),
             fg=COLORS["accent"],
             bg=COLORS["bg"],
@@ -168,7 +168,7 @@ class SettingsWindow:
 
         self._hint_label = tk.Label(
             capture_frame,
-            text="请按下包含修饰键的组合键（如 Ctrl+Shift+T）",
+            text="Press a combination that includes a modifier key (e.g. Ctrl+Shift+T)",
             font=(FONT_FAMILY, 13),
             fg=COLORS["text_muted"],
             bg=COLORS["bg"],
@@ -184,7 +184,7 @@ class SettingsWindow:
 
         # 保存按钮
         self._save_btn = tk.Label(
-            btn_frame, text="  保存  ",
+            btn_frame, text="  Save  ",
             font=(FONT_FAMILY, 14),
             fg=COLORS["text_result"], bg=COLORS["btn_primary"],
             cursor="hand2", padx=24, pady=8,
@@ -197,7 +197,7 @@ class SettingsWindow:
 
         # 恢复默认按钮
         self._reset_btn = tk.Label(
-            btn_frame, text="恢复默认",
+            btn_frame, text="Reset to default",
             font=(FONT_FAMILY, 14),
             fg=COLORS["text_result"], bg=COLORS["btn_bg"],
             cursor="hand2", padx=18, pady=8,
@@ -265,7 +265,7 @@ class SettingsWindow:
 
         # 非修饰键：组合成快捷键
         if not self._pressed_modifiers:
-            self._update_display("需要包含修饰键！", error=True)
+            self._update_display("A modifier key is required!", error=True)
             self.root.after(1500, self._reset_display)
             return
 
@@ -331,7 +331,7 @@ class SettingsWindow:
         self._captured_pynput = ""
         self._captured_display = ""
         self._save_btn.config(state="disabled")
-        self._update_display("按下新的快捷键...", waiting=False)
+        self._update_display("Press a new hotkey...", waiting=False)
         self._start_blink()
 
     # ── 闪烁动画 ──────────────────────────────────────
@@ -379,7 +379,7 @@ class SettingsWindow:
         self._captured_pynput = DEFAULT_CONFIG["hotkey"]
         self._captured_display = DEFAULT_CONFIG["hotkey_display"]
         self._stop_blink()
-        self._update_display(f"{self._captured_display}（默认）", success=True)
+        self._update_display(f"{self._captured_display} (default)", success=True)
         self._save_btn.config(state="normal")
         logger.info("恢复默认快捷键")
 

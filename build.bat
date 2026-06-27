@@ -13,7 +13,7 @@ if exist dist rmdir /s /q dist
 if exist "选中翻译.spec" del /f /q "选中翻译.spec"
 
 echo [2/4] run PyInstaller...
-python -m PyInstaller --windowed -y --name "选中翻译" --add-binary "C:\Users\admin\AppData\Local\Programs\Python\Python312\DLLs\_tkinter.pyd;." --add-binary "C:\Users\admin\AppData\Local\Programs\Python\Python312\DLLs\tcl86t.dll;." --add-binary "C:\Users\admin\AppData\Local\Programs\Python\Python312\DLLs\tk86t.dll;." --add-data "C:\Users\admin\AppData\Local\Programs\Python\Python312\tcl\tcl8.6;_tcl_data" --add-data "C:\Users\admin\AppData\Local\Programs\Python\Python312\tcl\tk8.6;_tk_data" --add-data "translator.py;." --add-data "hotkey_manager.py;." --add-data "popup_window.py;." --add-data "tray_icon.py;." --add-data "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\llama_cpp;llama_cpp" main.py
+python -m PyInstaller --windowed -y --name "选中翻译" --icon="app.ico" --add-data "app.ico;." --add-binary "C:\Users\admin\AppData\Local\Programs\Python\Python312\DLLs\_tkinter.pyd;." --add-binary "C:\Users\admin\AppData\Local\Programs\Python\Python312\DLLs\tcl86t.dll;." --add-binary "C:\Users\admin\AppData\Local\Programs\Python\Python312\DLLs\tk86t.dll;." --add-data "C:\Users\admin\AppData\Local\Programs\Python\Python312\tcl\tcl8.6;_tcl_data" --add-data "C:\Users\admin\AppData\Local\Programs\Python\Python312\tcl\tk8.6;_tk_data" --add-data "translator.py;." --add-data "hotkey_manager.py;." --add-data "popup_window.py;." --add-data "tray_icon.py;." --add-data "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\llama_cpp;llama_cpp" main.py
 
 if errorlevel 1 (
     echo.

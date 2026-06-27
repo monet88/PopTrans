@@ -4,6 +4,8 @@ tray_icon.py — 系统托盘图标模块
 使用 pystray 在 Windows 系统托盘显示图标，提供右键菜单进行管理。
 """
 
+import os
+import sys
 import logging
 
 from PIL import Image, ImageDraw, ImageFont
@@ -28,12 +30,12 @@ def _create_icon_image(size: int = 64) -> Image.Image:
         fill=(139, 92, 246),  # #8b5cf6
     )
 
-    # 尝试使用系统中文字体绘制 "译" 字
-    label = "译"
+    # Draw the glyph used on the tray icon
+    label = "T"
     font_size = size // 2
     font = None
 
-    # 按优先级尝试中文字体
+    # Try fonts in priority order
     font_candidates = [
         "msyh.ttc",         # 微软雅黑
         "msyhbd.ttc",       # 微软雅黑 Bold
@@ -66,6 +68,29 @@ def _create_icon_image(size: int = 64) -> Image.Image:
     return img
 
 
+def _get_icon_image() -> Image.Image:
+    """
+    加载 app.ico 文件作为托盘图标，如果不存在则动态生成。
+    """
+    ico_path = None
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 打包后的临时目录
+        ico_path = os.path.join(sys._MEIPASS, "app.ico")
+    else:
+        # 开发模式下
+        ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.ico")
+
+    if ico_path and os.path.exists(ico_path):
+        try:
+            with Image.open(ico_path) as img:
+                return img.copy()
+        except Exception as e:
+            logger.warning(f"无法加载 app.ico: {e}")
+            
+    # 回退到动态生成
+    return _create_icon_image()
+
+
 class TrayIcon:
     """系统托盘图标管理器"""
 
@@ -80,35 +105,35 @@ class TrayIcon:
         self.on_settings = on_settings
         self.on_toggle_hotkey = on_toggle_hotkey
         self._icon = None
-        self._status_text = "正在初始化..."
-        self._hotkey_display = "Ctrl+Alt+Q"
+        self._status_text = "Initializing..."
+        self._hotkey_display = "Ctrl+Q"
 
     def _create_menu(self):
         """创建菜单（每次调用生成新菜单）"""
         return pystray.Menu(
             Item(
-                "选中翻译 v1.0",
+                "PopTrans v1.0",
                 None,
                 enabled=False,
             ),
             pystray.Menu.SEPARATOR,
             Item(
-                f"状态: {self._status_text}",
+                f"Trạng thái: {self._status_text}",
                 None,
                 enabled=False,
             ),
             Item(
-                f"快捷键: {self._hotkey_display}",
+                f"Phím tắt: {self._hotkey_display}",
                 None,
                 enabled=False,
             ),
             Item(
-                "设置快捷键",
+                "Cài đặt phím tắt",
                 self._on_settings_clicked,
             ),
             pystray.Menu.SEPARATOR,
             Item(
-                "退出",
+                "Thoát",
                 self._on_quit_clicked,
             ),
         )
@@ -117,7 +142,7 @@ class TrayIcon:
         """更新托盘提示文字和菜单"""
         self._status_text = status
         if self._icon:
-            self._icon.title = f"选中翻译 — {status}"
+            self._icon.title = f"PopTrans - {status}"
             self._icon.menu = self._create_menu()
 
     def update_hotkey_display(self, hotkey_display: str):
@@ -128,13 +153,12 @@ class TrayIcon:
 
     def start(self):
         """启动托盘图标"""
-        icon_image = _create_icon_image()
+        icon_image = _get_icon_image()
 
         self._icon = pystray.Icon(
             name="translate-plugin",
             icon=icon_image,
-            title=f"选中翻译 - {self._status_text}",
-            menu=self._create_menu(),
+            title=f"PopTrans - {self._status_text}",
         )
 
         # 使用 run_detached 在后台运行，比手动线程更可靠
