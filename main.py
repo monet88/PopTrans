@@ -1,4 +1,4 @@
-﻿"""
+"""
 main.py — 选中翻译工具主入口
 
 Windows 桌面翻译工具：选中任意文本，按下 Ctrl+Alt+Q 即可弹窗显示翻译结果。
@@ -88,7 +88,7 @@ class TranslateApp:
 
     def __init__(self):
         logger.info("=" * 50)
-        logger.info("选中翻译工具启动")
+        logger.info("Công cụ Dịch Khi Bôi Đen khởi động")
         logger.info("=" * 50)
 
         # ── 初始化 tkinter ──
@@ -96,7 +96,20 @@ class TranslateApp:
         self._main_thread_id = threading.get_ident()
         self._is_quitting = False
         self.root.withdraw()  # 隐藏主窗口
-        self.root.title("选中翻译")
+        self.root.title("Dịch Khi Bôi Đen")
+
+        # ── 设置窗口图标 ──
+        ico_path = None
+        if getattr(sys, 'frozen', False):
+            ico_path = os.path.join(sys._MEIPASS, "app.ico")
+        else:
+            ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.ico")
+        
+        if os.path.exists(ico_path):
+            try:
+                self.root.iconbitmap(ico_path)
+            except Exception as e:
+                logger.warning(f"Không đặt được icon cửa sổ Tkinter (iconbitmap): {e}")
         
         # 设置字体渲染质量
         try:
@@ -131,17 +144,17 @@ class TranslateApp:
         self.tray.start()
 
         from tkinter import messagebox
-        logger.info(f"所有模块初始化完成，快捷键: {self.current_hotkey_display}")
-        logger.info("等待用户操作...")
+        logger.info(f"Tất cả mô-đun đã khởi tạo xong, phím tắt: {self.current_hotkey_display}")
+        logger.info("Đang chờ thao tác của người dùng...")
         
         # 弹窗提示启动成功
-        messagebox.showinfo("选中翻译工具", f"翻译工具已在后台启动！\n\n快捷键：{self.current_hotkey_display}\n请尝试选中文本后按下快捷键。")
+        messagebox.showinfo("Dịch Khi Bôi Đen", f"Công cụ dịch đã chạy nền!\n\nPhím tắt: {self.current_hotkey_display}\nHãy bôi đen văn bản rồi nhấn phím tắt để dịch.")
 
         # ── 启动主循环 ──
         try:
             self.root.mainloop()
         except KeyboardInterrupt:
-            logger.info("收到键盘中断，退出")
+            logger.info("Nhận tín hiệu ngắt bàn phím, đang thoát")
             self._quit()
 
     # ── 设置 ──────────────────────────────────────────────
@@ -150,7 +163,7 @@ class TranslateApp:
         """打开快捷键设置窗口"""
         def on_hotkey_saved(pynput_hotkey, display_hotkey):
             """快捷键保存回调"""
-            logger.info(f"快捷键已更新: {pynput_hotkey} ({display_hotkey})")
+            logger.info(f"Đã cập nhật phím tắt: {pynput_hotkey} ({display_hotkey})")
             
             # 保存到配置文件
             if set_hotkey(pynput_hotkey, display_hotkey):
@@ -166,9 +179,9 @@ class TranslateApp:
                 # 更新托盘菜单
                 self.tray.update_hotkey_display(display_hotkey)
                 
-                logger.info(f"快捷键已重新注册: {display_hotkey}")
+                logger.info(f"Đã đăng ký lại phím tắt: {display_hotkey}")
             else:
-                logger.error("保存快捷键配置失败")
+                logger.error("Lưu cấu hình phím tắt thất bại")
         
         # 打开设置窗口
         settings_window = SettingsWindow(self.root, on_saved=on_hotkey_saved)
@@ -179,11 +192,11 @@ class TranslateApp:
     def _on_translator_ready(self, success: bool):
         """翻译引擎初始化完成回调"""
         if success:
-            logger.info("翻译引擎初始化成功，工具已就绪")
-            self.tray.set_status("就绪")
+            logger.info("Khởi tạo engine dịch thành công, công cụ đã sẵn sàng")
+            self.tray.set_status("Sẵn sàng")
         else:
-            logger.error("翻译引擎初始化失败")
-            self.tray.set_status("初始化失败")
+            logger.error("Khởi tạo engine dịch thất bại")
+            self.tray.set_status("Khởi tạo thất bại")
 
     def _on_translator_status(self, message: str):
         """翻译引擎状态更新回调"""
@@ -194,7 +207,7 @@ class TranslateApp:
         热键捕获到选中文本后的回调。
         注意：此方法在 keyboard 线程中调用，需要通过 root.after 调度到主线程。
         """
-        logger.info(f"捕获文本: {text[:80]}...")
+        logger.info(f"Đã lấy văn bản: {text[:80]}...")
         # 调度到 tkinter 主线程
         self.root.after(0, self._translate, text)
 
@@ -216,10 +229,10 @@ class TranslateApp:
     def _show_translation_result(self, original: str, result: str, error: str):
         """在主线程中显示翻译结果"""
         if error:
-            logger.warning(f"翻译失败: {error}")
+            logger.warning(f"Dịch thất bại: {error}")
             self.popup.update_to_error(original, error)
         else:
-            logger.info(f"翻译完成: {result[:80]}...")
+            logger.info(f"Dịch hoàn tất: {result[:80]}...")
             self.popup.update_to_result(original, result)
 
     # ── 退出 ──────────────────────────────────────────────
@@ -236,30 +249,30 @@ class TranslateApp:
         if self._is_quitting:
             return
         self._is_quitting = True
-        logger.info("正在退出...")
+        logger.info("Đang thoát...")
 
         try:
             self.hotkey_manager.stop()
         except Exception as e:
-            logger.warning(f"停止热键时出错: {e}")
+            logger.warning(f"Lỗi khi dừng phím tắt: {e}")
 
         try:
             self.translator.close()
         except Exception as e:
-            logger.warning(f"关闭翻译模型时出错: {e}")
+            logger.warning(f"Lỗi khi đóng mô hình dịch: {e}")
 
         try:
             self.tray.stop()
         except Exception as e:
-            logger.warning(f"停止托盘时出错: {e}")
+            logger.warning(f"Lỗi khi dừng khay hệ thống: {e}")
 
         try:
             self.root.quit()
             self.root.destroy()
         except Exception as e:
-            logger.warning(f"关闭窗口时出错: {e}")
+            logger.warning(f"Lỗi khi đóng cửa sổ: {e}")
 
-        logger.info("已退出")
+        logger.info("Đã thoát")
         self._force_exit()
 
     @staticmethod
@@ -297,7 +310,7 @@ def check_single_instance():
             from tkinter import messagebox
             root = tk.Tk()
             root.withdraw()
-            messagebox.showwarning("选中翻译工具", "程序已在运行中！\n请检查系统托盘区域。")
+            messagebox.showwarning("PopTrans", "Ứng dụng đang chạy rồi!\nVui lòng kiểm tra khay hệ thống.")
             root.destroy()
         except:
             pass
@@ -320,14 +333,14 @@ if __name__ == "__main__":
         # 捕获所有未处理异常，写入日志并弹窗提示
         import traceback
         error_msg = f"程序异常退出: {e}\n\n{traceback.format_exc()}"
-        logger.exception("程序异常退出")
+        logger.exception("Chương trình thoát do lỗi")
         
         # 尝试弹窗显示错误
         try:
             from tkinter import messagebox
             root = tk.Tk()
             root.withdraw()
-            messagebox.showerror("选中翻译 - 错误", f"程序启动失败：\n\n{e}\n\n详见 translate.log")
+            messagebox.showerror("PopTrans - Lỗi", f"Khởi động ứng dụng thất bại:\n\n{e}\n\nXem chi tiết trong translate.log")
             root.destroy()
         except:
             pass

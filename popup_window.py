@@ -217,7 +217,7 @@ class TranslationPopup:
         
         tk.Label(
             tag_frame,
-            text=" 翻译中 ",
+            text=" Translating ",
             font=(FONT_FAMILY, FONT_SIZE_LABEL, "bold"),
             fg="#ffffff",
             bg=COLORS["accent_glow"],
@@ -227,7 +227,7 @@ class TranslationPopup:
 
         self._loading_label = tk.Label(
             loading_frame,
-            text="正在翻译，请稍候...",
+            text="Translating, please wait...",
             font=(FONT_FAMILY, FONT_SIZE_TEXT),
             fg=COLORS["accent"],
             bg=COLORS["bg"],
@@ -244,7 +244,7 @@ class TranslationPopup:
         self._loading_dots = (self._loading_dots + 1) % 4
         dots = "." * self._loading_dots
         try:
-            self._loading_label.config(text=f"正在翻译，请稍候{dots}")
+            self._loading_label.config(text=f"Translating, please wait{dots}")
         except tk.TclError:
             return
         self._loading_after_id = self.root.after(350, self._animate_loading)
@@ -293,7 +293,7 @@ class TranslationPopup:
         
         tk.Label(
             tag_frame,
-            text=" ⚠ 错误 ",
+            text=" ⚠ Error ",
             font=(FONT_FAMILY, FONT_SIZE_LABEL, "bold"),
             fg="#ffffff",
             bg=COLORS["error_text"],
@@ -339,7 +339,7 @@ class TranslationPopup:
 
         tk.Label(
             title_frame,
-            text="选中翻译",
+            text="Quick Translate",
             font=(FONT_FAMILY, FONT_SIZE_TITLE, "bold"),
             fg=COLORS["text_result"],
             bg=COLORS["header_bg"],
@@ -376,7 +376,7 @@ class TranslationPopup:
         
         tk.Label(
             tag_frame,
-            text=" 原文 ",
+            text=" Source ",
             font=(FONT_FAMILY, FONT_SIZE_LABEL),
             fg=COLORS["tag_text"],
             bg=COLORS["tag_bg"],
@@ -418,7 +418,7 @@ class TranslationPopup:
         
         tk.Label(
             tag_frame,
-            text=" 译文 ",
+            text=" Translation ",
             font=(FONT_FAMILY, FONT_SIZE_LABEL, "bold"),
             fg="#ffffff",
             bg=COLORS["accent_glow"],
@@ -466,7 +466,7 @@ class TranslationPopup:
 
         copy_btn = tk.Label(
             btn_frame,
-            text="  📋 复制译文  ",
+            text="  📋 Copy translation  ",
             font=(FONT_FAMILY, FONT_SIZE_BTN),
             fg=COLORS["text_result"],
             bg=COLORS["btn_copy_bg"],
@@ -479,9 +479,9 @@ class TranslationPopup:
         def on_copy(e):
             self.root.clipboard_clear()
             self.root.clipboard_append(text_to_copy)
-            copy_btn.config(text="  ✓ 已复制  ", fg=COLORS["success_text"], bg=COLORS["btn_copy_bg"])
+            copy_btn.config(text="  ✓ Copied  ", fg=COLORS["success_text"], bg=COLORS["btn_copy_bg"])
             self.root.after(1500, lambda: (
-                copy_btn.config(text="  📋 复制译文  ", fg=COLORS["text_result"], bg=COLORS["btn_copy_bg"])
+                copy_btn.config(text="  📋 Copy translation  ", fg=COLORS["text_result"], bg=COLORS["btn_copy_bg"])
                 if copy_btn.winfo_exists() else None
             ))
 

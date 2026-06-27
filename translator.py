@@ -30,11 +30,18 @@ else:
 MODEL_DIR = os.path.join(_BASE_DIR, "models", "Hy-MT2-1.8B-GGUF")
 MODEL_PATH = os.path.join(MODEL_DIR, MODEL_FILENAME)
 
-# HuggingFace 镜像（国内加速）+ 绕过系统代理
-HF_MIRROR = "https://hf-mirror.com"
-os.environ["HF_ENDPOINT"] = HF_MIRROR
-os.environ["NO_PROXY"] = "hf-mirror.com,huggingface.co"
-os.environ["no_proxy"] = "hf-mirror.com,huggingface.co"
+# HuggingFace endpoint + bypass system proxy.
+# Default to the official Hub. The hf-mirror.com mirror drops the
+# `x-repo-commit` header on redirects, which makes huggingface_hub >=1.0 raise
+# FileMetadataError. Users who need a mirror can still override HF_ENDPOINT
+# in their environment before launch.
+HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co")
+os.environ["HF_ENDPOINT"] = HF_ENDPOINT
+# Only bypass the system proxy when an explicit mirror is configured. On the
+# official Hub, users in restricted regions may need their proxy to reach it.
+if "hf-mirror.com" in HF_ENDPOINT:
+    os.environ["NO_PROXY"] = "hf-mirror.com"
+    os.environ["no_proxy"] = "hf-mirror.com"
 
 # Hy-MT2 推荐参数
 GENERATION_CONFIG = {
@@ -47,9 +54,13 @@ GENERATION_CONFIG = {
 
 # 语言名称映射
 LANG_NAMES = {
-    "zh": "中文",
-    "en": "英语",
+    "zh": "Chinese",
+    "en": "English",
+    "vi": "Vietnamese",
 }
+
+# Target translation language: any language -> Vietnamese
+TARGET_LANG = "Vietnamese"
 
 
 def _create_no_proxy_session():
@@ -61,8 +72,36 @@ def _create_no_proxy_session():
     return session
 
 
+def _configure_no_proxy_backend():
+    """Route huggingface_hub traffic through a proxy-free client.
+
+    huggingface_hub >=1.0 switched from `requests` to `httpx` and replaced
+    `configure_http_backend` with `set_client_factory`. Support both so the
+    downloader works regardless of the installed version.
+    """
+    try:
+        # huggingface_hub >= 1.0 (httpx backend)
+        import httpx
+        from huggingface_hub.utils import set_client_factory
+
+        set_client_factory(
+            lambda: httpx.Client(trust_env=False, follow_redirects=True, timeout=None)
+        )
+        return
+    except ImportError:
+        pass
+
+    # huggingface_hub < 1.0 (requests backend)
+    from huggingface_hub import configure_http_backend
+
+    configure_http_backend(backend_factory=_create_no_proxy_session)
+
+
 # 翻译 prompt 模板
-PROMPT_TEMPLATE = "将以下文本翻译为{target_lang}，注意只需要输出翻译后的结果，不要额外解释：\n\n{source_text}"
+PROMPT_TEMPLATE = (
+    "Translate the following text into {target_lang}. "
+    "Output only the translation, without any extra explanation:\n\n{source_text}"
+)
 
 
 class Translator:
@@ -75,7 +114,7 @@ class Translator:
         self.ready = False
         self._model = None
         self._setup_lock = threading.Lock()
-        self._status_message = "翻译引擎未初始化"
+        self._status_message = "Engine dịch chưa khởi tạo"
 
     @property
     def status(self) -> str:
@@ -110,34 +149,35 @@ class Translator:
             try:
                 # 检查模型是否已下载
                 if not os.path.exists(MODEL_PATH):
-                    update_status("首次使用需下载 Hy-MT2 模型（约 1.13GB）...")
+                    update_status("Lần đầu chạy: đang tải mô hình Hy-MT2 (~1.13GB)...")
                     self._download_model(update_status)
 
-                update_status("正在加载翻译模型...")
+                update_status("Đang nạp mô hình dịch...")
                 self._load_model()
 
                 self.ready = True
-                update_status("翻译引擎就绪")
+                update_status("Engine dịch đã sẵn sàng")
 
                 if on_ready:
                     on_ready(True)
 
             except Exception as e:
-                error_msg = f"翻译引擎初始化失败: {e}"
+                error_msg = f"Khởi tạo engine dịch thất bại: {e}"
                 update_status(error_msg)
-                logger.exception("翻译引擎初始化异常")
+                logger.exception("Lỗi khi khởi tạo engine dịch")
                 if on_ready:
                     on_ready(False)
 
     def _download_model(self, update_status):
         """下载 Hy-MT2 GGUF 模型"""
-        from huggingface_hub import hf_hub_download, configure_http_backend
+        from huggingface_hub import hf_hub_download
 
-        update_status("正在从 HuggingFace 镜像下载模型...")
+        update_status("Đang tải mô hình từ HuggingFace...")
         os.makedirs(MODEL_DIR, exist_ok=True)
 
-        # 禁用代理，直连镜像
-        configure_http_backend(backend_factory=lambda: _create_no_proxy_session())
+        # 禁用代理，直连镜像（仅当显式使用镜像时，否则尊重系统代理）
+        if "hf-mirror.com" in HF_ENDPOINT:
+            _configure_no_proxy_backend()
 
         # 下载模型到本地目录
         hf_hub_download(
@@ -147,7 +187,7 @@ class Translator:
             cache_dir=os.path.join(os.path.dirname(MODEL_DIR), "cache"),
         )
 
-        update_status("模型下载完成")
+        update_status("Tải mô hình hoàn tất")
 
     def _load_model(self):
         """加载 llama-cpp-python 模型"""
@@ -194,16 +234,12 @@ class Translator:
 
         text = text.strip()
         if not text:
-            return None, "文本为空"
+            return None, "Text is empty"
 
         try:
-            # 自动检测翻译方向
-            if self._is_chinese(text):
-                tgt_lang = "英语"
-                direction = "中→英"
-            else:
-                tgt_lang = "中文"
-                direction = "英→中"
+            # any language → Vietnamese
+            tgt_lang = TARGET_LANG
+            direction = f"any->{TARGET_LANG}"
 
             # 构造翻译 prompt
             prompt = PROMPT_TEMPLATE.format(target_lang=tgt_lang, source_text=text)
@@ -219,16 +255,16 @@ class Translator:
             if response and "choices" in response and len(response["choices"]) > 0:
                 result = response["choices"][0]["message"]["content"].strip()
                 if result:
-                    logger.info(f"翻译成功 [{direction}]: {text[:30]}...")
+                    logger.info(f"Dịch thành công [{direction}]: {text[:30]}...")
                     return result, None
                 else:
-                    return None, "翻译返回空结果"
+                    return None, "Translation returned an empty result"
             else:
-                return None, "翻译返回无效响应"
+                return None, "Translation returned an invalid response"
 
         except Exception as e:
-            logger.exception(f"翻译失败: {text[:30]}...")
-            return None, f"翻译出错: {e}"
+            logger.exception(f"Dịch thất bại: {text[:30]}...")
+            return None, f"Translation error: {e}"
 
     def _is_chinese(self, text: str) -> bool:
         """

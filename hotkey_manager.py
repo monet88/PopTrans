@@ -50,7 +50,7 @@ class HotkeyManager:
         self._hotkey_listener.start()
 
         self._active = True
-        logger.info(f"全局热键已注册: {self.hotkey}")
+        logger.info(f"Đã đăng ký phím tắt toàn cục: {self.hotkey}")
 
     def stop(self):
         """停止监听并注销热键"""
@@ -62,10 +62,10 @@ class HotkeyManager:
                 self._hotkey_listener.stop()
                 self._hotkey_listener = None
         except Exception as e:
-            logger.warning(f"注销热键时出错: {e}")
+            logger.warning(f"Lỗi khi hủy đăng ký phím tắt: {e}")
 
         self._active = False
-        logger.info("全局热键已注销")
+        logger.info("Đã hủy đăng ký phím tắt toàn cục")
 
     def _on_hotkey_pressed(self):
         """
@@ -81,10 +81,10 @@ class HotkeyManager:
             return
 
         try:
-            logger.info("热键触发，正在捕获选中文本...")
+            logger.info("Phím tắt được kích hoạt, đang lấy văn bản đã bôi đen...")
             self._capture_and_translate()
         except Exception as e:
-            logger.error(f"热键处理出错: {e}")
+            logger.error(f"Lỗi khi xử lý phím tắt: {e}")
         finally:
             self._lock.release()
 
@@ -95,14 +95,14 @@ class HotkeyManager:
         try:
             original_clipboard = pyperclip.paste()
         except Exception:
-            logger.debug("无法读取剪贴板内容")
+            logger.debug("Không đọc được nội dung clipboard")
 
         # Step 2: 写入哨兵值，后续用它判断 Ctrl+C 是否真的更新了剪贴板
         sentinel = f"__translate_plugin_clipboard_sentinel_{uuid.uuid4()}__"
         try:
             pyperclip.copy(sentinel)
         except Exception as e:
-            logger.debug(f"无法准备剪贴板: {e}")
+            logger.debug(f"Không chuẩn bị được clipboard: {e}")
             return
 
         # Step 3: 模拟 Ctrl+C 复制选中内容
@@ -116,7 +116,7 @@ class HotkeyManager:
             try:
                 selected_text = pyperclip.paste()
             except Exception:
-                logger.debug("无法读取选中文本")
+                logger.debug("Không đọc được văn bản đã bôi đen")
                 break
 
             if selected_text != sentinel:
@@ -128,15 +128,15 @@ class HotkeyManager:
         try:
             pyperclip.copy(original_clipboard)
         except Exception:
-            logger.debug("无法恢复剪贴板")
+            logger.debug("Không khôi phục được clipboard")
 
         # Step 6: 触发翻译
         if selected_text and selected_text != sentinel and selected_text.strip():
             text = selected_text.strip()
-            logger.info(f"捕获选中文本: {text[:50]}...")
+            logger.info(f"Đã lấy văn bản bôi đen: {text[:50]}...")
             self.on_translate(text)
         else:
-            logger.warning("未检测到选中文本，请确认当前应用支持 Ctrl+C 复制选中内容")
+            logger.warning("Không phát hiện văn bản bôi đen, hãy chắc ứng dụng hiện tại hỗ trợ Ctrl+C để sao chép nội dung đã chọn")
 
     @staticmethod
     def _simulate_ctrl_c():
