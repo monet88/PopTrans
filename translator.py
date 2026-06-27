@@ -37,8 +37,11 @@ MODEL_PATH = os.path.join(MODEL_DIR, MODEL_FILENAME)
 # in their environment before launch.
 HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co")
 os.environ["HF_ENDPOINT"] = HF_ENDPOINT
-os.environ["NO_PROXY"] = "hf-mirror.com,huggingface.co"
-os.environ["no_proxy"] = "hf-mirror.com,huggingface.co"
+# Only bypass the system proxy when an explicit mirror is configured. On the
+# official Hub, users in restricted regions may need their proxy to reach it.
+if "hf-mirror.com" in HF_ENDPOINT:
+    os.environ["NO_PROXY"] = "hf-mirror.com"
+    os.environ["no_proxy"] = "hf-mirror.com"
 
 # Hy-MT2 推荐参数
 GENERATION_CONFIG = {
@@ -172,8 +175,9 @@ class Translator:
         update_status("Downloading model from HuggingFace mirror...")
         os.makedirs(MODEL_DIR, exist_ok=True)
 
-        # 禁用代理，直连镜像
-        _configure_no_proxy_backend()
+        # 禁用代理，直连镜像（仅当显式使用镜像时，否则尊重系统代理）
+        if "hf-mirror.com" in HF_ENDPOINT:
+            _configure_no_proxy_backend()
 
         # 下载模型到本地目录
         hf_hub_download(

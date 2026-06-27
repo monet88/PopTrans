@@ -159,6 +159,7 @@ class TrayIcon:
             name="translate-plugin",
             icon=icon_image,
             title=f"PopTrans - {self._status_text}",
+            menu=self._create_menu(),
         )
 
         # 使用 run_detached 在后台运行，比手动线程更可靠
