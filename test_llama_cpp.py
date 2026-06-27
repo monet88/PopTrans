@@ -45,8 +45,8 @@ def test_translation():
     print("\n正在初始化翻译引擎...")
     translator.setup(on_ready=on_ready, on_status=on_status)
     
-    # 等待初始化完成（status 失败信息为英文，匹配 "Failed"）
-    while not translator.ready and "Failed" not in translator.status:
+    # 等待初始化完成（status 失败信息为越南语，匹配 "thất bại"）
+    while not translator.ready and "thất bại" not in translator.status:
         time.sleep(1)
         print(f"等待中... 当前状态: {translator.status}")
     

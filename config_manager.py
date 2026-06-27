@@ -36,10 +36,10 @@ def load_config() -> Dict[str, Any]:
             with open(config_path, "r", encoding="utf-8") as f:
                 user_cfg = json.load(f)
             merged = {**DEFAULT_CONFIG, **user_cfg}
-            logger.info(f"已加载配置: {config_path}")
+            logger.info(f"Đã nạp cấu hình: {config_path}")
             return merged
         except (json.JSONDecodeError, IOError) as e:
-            logger.warning(f"配置读取失败，使用默认值: {e}")
+            logger.warning(f"Đọc cấu hình thất bại, dùng giá trị mặc định: {e}")
     return DEFAULT_CONFIG.copy()
 
 
@@ -49,10 +49,10 @@ def save_config(config: Dict[str, Any]) -> bool:
     try:
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
-        logger.info(f"配置已保存: {config_path}")
+        logger.info(f"Đã lưu cấu hình: {config_path}")
         return True
     except IOError as e:
-        logger.error(f"保存配置失败: {e}")
+        logger.error(f"Lưu cấu hình thất bại: {e}")
         return False
 
 

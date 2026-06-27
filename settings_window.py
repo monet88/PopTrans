@@ -303,7 +303,7 @@ class SettingsWindow:
         self._stop_blink()
         self._update_display(self._captured_display, success=True)
         self._save_btn.config(state="normal")
-        logger.info(f"捕获快捷键: {self._captured_pynput} ({self._captured_display})")
+        logger.info(f"Đã bắt phím tắt: {self._captured_pynput} ({self._captured_display})")
 
     def _on_key_release(self, event):
         if not self._is_listening:
@@ -369,7 +369,7 @@ class SettingsWindow:
     def _save(self):
         if not self._captured_pynput:
             return
-        logger.info(f"保存快捷键: {self._captured_pynput} ({self._captured_display})")
+        logger.info(f"Đã lưu phím tắt: {self._captured_pynput} ({self._captured_display})")
         if self.on_saved:
             self.on_saved(self._captured_pynput, self._captured_display)
         self._close()
@@ -381,7 +381,7 @@ class SettingsWindow:
         self._stop_blink()
         self._update_display(f"{self._captured_display} (default)", success=True)
         self._save_btn.config(state="normal")
-        logger.info("恢复默认快捷键")
+        logger.info("Khôi phục phím tắt mặc định")
 
     def _close(self):
         self._is_listening = False

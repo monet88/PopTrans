@@ -85,7 +85,7 @@ def _get_icon_image() -> Image.Image:
             with Image.open(ico_path) as img:
                 return img.copy()
         except Exception as e:
-            logger.warning(f"无法加载 app.ico: {e}")
+            logger.warning(f"Không thể tải app.ico: {e}")
             
     # 回退到动态生成
     return _create_icon_image()
@@ -164,7 +164,7 @@ class TrayIcon:
 
         # 使用 run_detached 在后台运行，比手动线程更可靠
         self._icon.run_detached()
-        logger.info("系统托盘图标已启动")
+        logger.info("Đã khởi động biểu tượng khay hệ thống")
 
     def stop(self):
         """停止托盘图标"""
@@ -172,17 +172,17 @@ class TrayIcon:
             try:
                 self._icon.stop()
             except Exception as e:
-                logger.warning(f"停止托盘图标时出错: {e}")
+                logger.warning(f"Lỗi khi dừng biểu tượng khay: {e}")
 
     def _on_settings_clicked(self, icon, item):
         """处理设置按钮点击"""
-        logger.info("用户通过托盘打开设置窗口")
+        logger.info("Người dùng mở cửa sổ cài đặt từ khay hệ thống")
         if self.on_settings:
             self.on_settings()
 
     def _on_quit_clicked(self, icon, item):
         """处理退出按钮点击"""
-        logger.info("用户通过托盘退出应用")
+        logger.info("Người dùng thoát ứng dụng từ khay hệ thống")
         if self.on_quit:
             self.on_quit()
 

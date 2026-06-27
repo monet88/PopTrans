@@ -114,7 +114,7 @@ class Translator:
         self.ready = False
         self._model = None
         self._setup_lock = threading.Lock()
-        self._status_message = "Translation engine not initialized"
+        self._status_message = "Engine dịch chưa khởi tạo"
 
     @property
     def status(self) -> str:
@@ -149,22 +149,22 @@ class Translator:
             try:
                 # 检查模型是否已下载
                 if not os.path.exists(MODEL_PATH):
-                    update_status("First run: downloading Hy-MT2 model (~1.13GB)...")
+                    update_status("Lần đầu chạy: đang tải mô hình Hy-MT2 (~1.13GB)...")
                     self._download_model(update_status)
 
-                update_status("Loading translation model...")
+                update_status("Đang nạp mô hình dịch...")
                 self._load_model()
 
                 self.ready = True
-                update_status("Translation engine ready")
+                update_status("Engine dịch đã sẵn sàng")
 
                 if on_ready:
                     on_ready(True)
 
             except Exception as e:
-                error_msg = f"Failed to initialize translation engine: {e}"
+                error_msg = f"Khởi tạo engine dịch thất bại: {e}"
                 update_status(error_msg)
-                logger.exception("翻译引擎初始化异常")
+                logger.exception("Lỗi khi khởi tạo engine dịch")
                 if on_ready:
                     on_ready(False)
 
@@ -172,7 +172,7 @@ class Translator:
         """下载 Hy-MT2 GGUF 模型"""
         from huggingface_hub import hf_hub_download
 
-        update_status("Downloading model from HuggingFace mirror...")
+        update_status("Đang tải mô hình từ HuggingFace...")
         os.makedirs(MODEL_DIR, exist_ok=True)
 
         # 禁用代理，直连镜像（仅当显式使用镜像时，否则尊重系统代理）
@@ -187,7 +187,7 @@ class Translator:
             cache_dir=os.path.join(os.path.dirname(MODEL_DIR), "cache"),
         )
 
-        update_status("Model download complete")
+        update_status("Tải mô hình hoàn tất")
 
     def _load_model(self):
         """加载 llama-cpp-python 模型"""
@@ -255,7 +255,7 @@ class Translator:
             if response and "choices" in response and len(response["choices"]) > 0:
                 result = response["choices"][0]["message"]["content"].strip()
                 if result:
-                    logger.info(f"翻译成功 [{direction}]: {text[:30]}...")
+                    logger.info(f"Dịch thành công [{direction}]: {text[:30]}...")
                     return result, None
                 else:
                     return None, "Translation returned an empty result"
@@ -263,7 +263,7 @@ class Translator:
                 return None, "Translation returned an invalid response"
 
         except Exception as e:
-            logger.exception(f"翻译失败: {text[:30]}...")
+            logger.exception(f"Dịch thất bại: {text[:30]}...")
             return None, f"Translation error: {e}"
 
     def _is_chinese(self, text: str) -> bool:
