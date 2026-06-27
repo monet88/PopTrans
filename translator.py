@@ -47,9 +47,13 @@ GENERATION_CONFIG = {
 
 # 语言名称映射
 LANG_NAMES = {
-    "zh": "中文",
-    "en": "英语",
+    "zh": "Chinese",
+    "en": "English",
+    "vi": "Vietnamese",
 }
+
+# Target translation language: any language -> Vietnamese
+TARGET_LANG = "Vietnamese"
 
 
 def _create_no_proxy_session():
@@ -62,7 +66,10 @@ def _create_no_proxy_session():
 
 
 # 翻译 prompt 模板
-PROMPT_TEMPLATE = "将以下文本翻译为{target_lang}，注意只需要输出翻译后的结果，不要额外解释：\n\n{source_text}"
+PROMPT_TEMPLATE = (
+    "Translate the following text into {target_lang}. "
+    "Output only the translation, without any extra explanation:\n\n{source_text}"
+)
 
 
 class Translator:
@@ -75,7 +82,7 @@ class Translator:
         self.ready = False
         self._model = None
         self._setup_lock = threading.Lock()
-        self._status_message = "翻译引擎未初始化"
+        self._status_message = "Translation engine not initialized"
 
     @property
     def status(self) -> str:
@@ -110,20 +117,20 @@ class Translator:
             try:
                 # 检查模型是否已下载
                 if not os.path.exists(MODEL_PATH):
-                    update_status("首次使用需下载 Hy-MT2 模型（约 1.13GB）...")
+                    update_status("First run: downloading Hy-MT2 model (~1.13GB)...")
                     self._download_model(update_status)
 
-                update_status("正在加载翻译模型...")
+                update_status("Loading translation model...")
                 self._load_model()
 
                 self.ready = True
-                update_status("翻译引擎就绪")
+                update_status("Translation engine ready")
 
                 if on_ready:
                     on_ready(True)
 
             except Exception as e:
-                error_msg = f"翻译引擎初始化失败: {e}"
+                error_msg = f"Failed to initialize translation engine: {e}"
                 update_status(error_msg)
                 logger.exception("翻译引擎初始化异常")
                 if on_ready:
@@ -133,7 +140,7 @@ class Translator:
         """下载 Hy-MT2 GGUF 模型"""
         from huggingface_hub import hf_hub_download, configure_http_backend
 
-        update_status("正在从 HuggingFace 镜像下载模型...")
+        update_status("Downloading model from HuggingFace mirror...")
         os.makedirs(MODEL_DIR, exist_ok=True)
 
         # 禁用代理，直连镜像
@@ -147,7 +154,7 @@ class Translator:
             cache_dir=os.path.join(os.path.dirname(MODEL_DIR), "cache"),
         )
 
-        update_status("模型下载完成")
+        update_status("Model download complete")
 
     def _load_model(self):
         """加载 llama-cpp-python 模型"""
@@ -194,16 +201,12 @@ class Translator:
 
         text = text.strip()
         if not text:
-            return None, "文本为空"
+            return None, "Text is empty"
 
         try:
-            # 自动检测翻译方向
-            if self._is_chinese(text):
-                tgt_lang = "英语"
-                direction = "中→英"
-            else:
-                tgt_lang = "中文"
-                direction = "英→中"
+            # any language → Vietnamese
+            tgt_lang = TARGET_LANG
+            direction = f"any->{TARGET_LANG}"
 
             # 构造翻译 prompt
             prompt = PROMPT_TEMPLATE.format(target_lang=tgt_lang, source_text=text)
@@ -222,13 +225,13 @@ class Translator:
                     logger.info(f"翻译成功 [{direction}]: {text[:30]}...")
                     return result, None
                 else:
-                    return None, "翻译返回空结果"
+                    return None, "Translation returned an empty result"
             else:
-                return None, "翻译返回无效响应"
+                return None, "Translation returned an invalid response"
 
         except Exception as e:
             logger.exception(f"翻译失败: {text[:30]}...")
-            return None, f"翻译出错: {e}"
+            return None, f"Translation error: {e}"
 
     def _is_chinese(self, text: str) -> bool:
         """
