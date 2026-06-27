@@ -6,6 +6,13 @@ import sys
 import os
 import time
 
+# Windows 控制台默认 cp1252，无法输出中文/越南语，强制 stdout 使用 UTF-8
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # 添加当前目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,8 +45,8 @@ def test_translation():
     print("\n正在初始化翻译引擎...")
     translator.setup(on_ready=on_ready, on_status=on_status)
     
-    # 等待初始化完成
-    while not translator.ready and "失败" not in translator.status:
+    # 等待初始化完成（status 失败信息为英文，匹配 "Failed"）
+    while not translator.ready and "Failed" not in translator.status:
         time.sleep(1)
         print(f"等待中... 当前状态: {translator.status}")
     
@@ -47,12 +54,14 @@ def test_translation():
         print("翻译引擎初始化失败，无法进行测试")
         return
     
-    # 测试翻译
+    # 测试翻译：任意语言 → 越南语
     test_cases = [
-        ("Hello, how are you?", "英→中"),
-        ("今天天气真好", "中→英"),
-        ("This is a test sentence.", "英→中"),
-        ("我喜欢编程", "中→英"),
+        ("Hello, how are you?", "英→越"),
+        ("今天天气真好", "中→越"),
+        ("This is a test sentence.", "英→越"),
+        ("我喜欢编程", "中→越"),
+        ("人工知能はとても面白いです。", "日→越"),
+        ("The quick brown fox jumps over the lazy dog.", "英→越"),
     ]
     
     print("\n" + "=" * 50)

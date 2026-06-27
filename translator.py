@@ -30,9 +30,13 @@ else:
 MODEL_DIR = os.path.join(_BASE_DIR, "models", "Hy-MT2-1.8B-GGUF")
 MODEL_PATH = os.path.join(MODEL_DIR, MODEL_FILENAME)
 
-# HuggingFace 镜像（国内加速）+ 绕过系统代理
-HF_MIRROR = "https://hf-mirror.com"
-os.environ["HF_ENDPOINT"] = HF_MIRROR
+# HuggingFace endpoint + bypass system proxy.
+# Default to the official Hub. The hf-mirror.com mirror drops the
+# `x-repo-commit` header on redirects, which makes huggingface_hub >=1.0 raise
+# FileMetadataError. Users who need a mirror can still override HF_ENDPOINT
+# in their environment before launch.
+HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co")
+os.environ["HF_ENDPOINT"] = HF_ENDPOINT
 os.environ["NO_PROXY"] = "hf-mirror.com,huggingface.co"
 os.environ["no_proxy"] = "hf-mirror.com,huggingface.co"
 
@@ -63,6 +67,31 @@ def _create_no_proxy_session():
     session.trust_env = False
     session.proxies = {"http": "", "https": ""}
     return session
+
+
+def _configure_no_proxy_backend():
+    """Route huggingface_hub traffic through a proxy-free client.
+
+    huggingface_hub >=1.0 switched from `requests` to `httpx` and replaced
+    `configure_http_backend` with `set_client_factory`. Support both so the
+    downloader works regardless of the installed version.
+    """
+    try:
+        # huggingface_hub >= 1.0 (httpx backend)
+        import httpx
+        from huggingface_hub.utils import set_client_factory
+
+        set_client_factory(
+            lambda: httpx.Client(trust_env=False, follow_redirects=True, timeout=None)
+        )
+        return
+    except ImportError:
+        pass
+
+    # huggingface_hub < 1.0 (requests backend)
+    from huggingface_hub import configure_http_backend
+
+    configure_http_backend(backend_factory=_create_no_proxy_session)
 
 
 # 翻译 prompt 模板
@@ -138,13 +167,13 @@ class Translator:
 
     def _download_model(self, update_status):
         """下载 Hy-MT2 GGUF 模型"""
-        from huggingface_hub import hf_hub_download, configure_http_backend
+        from huggingface_hub import hf_hub_download
 
         update_status("Downloading model from HuggingFace mirror...")
         os.makedirs(MODEL_DIR, exist_ok=True)
 
         # 禁用代理，直连镜像
-        configure_http_backend(backend_factory=lambda: _create_no_proxy_session())
+        _configure_no_proxy_backend()
 
         # 下载模型到本地目录
         hf_hub_download(
